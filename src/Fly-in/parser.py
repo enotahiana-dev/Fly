@@ -244,11 +244,11 @@ def get_network() -> Network:
                 starthub += 1
             elif line.startswith("end_hub"):
                 endhub += 1
-            if starthub > 1 or endhub > 1:
-                raise ValueError("Start_hub/end_hub must be at most 1")
             if not line.strip().startswith("#") and line.strip():
                 _network.append(line.strip())
         if not _network[0].startswith("nb_drones:"):
             raise ValueError("First line should be nb_drones")
+        if starthub > 1 or endhub > 1:
+            raise ValueError("Start_hub/end_hub must be at most 1")
 
     return data_parser(_network)
