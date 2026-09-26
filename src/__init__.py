@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from fly-in!")
+__all__: list[str] = []

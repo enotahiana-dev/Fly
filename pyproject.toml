@@ -1,18 +1,21 @@
 [project]
-name = "fly-in"
+name = "fly"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+authors = [
+    { name = "erakoto", email = "enotahiana@gmail.com" }
+]
 requires-python = ">=3.12"
 dependencies = [
     "flake8>=7.3.0",
     "mypy>=2.3.1",
     "pydantic>=2.13.5",
-    "webcolors>=25.10.0",
+    "webcolors>=25.10.0"
 ]
 
 [project.scripts]
-fly-in = "fly_in:main"
+fly = "fly:main"
 
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]

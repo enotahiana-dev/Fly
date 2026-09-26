@@ -1,5 +1,5 @@
 from pydantic import BaseModel, model_validator, Field
-import webcolors  # type: ignore
+import webcolors
 from argparse import Namespace, ArgumentParser
 
 
@@ -223,7 +223,7 @@ def metadata_parser(metadata: str) -> Metadata:
     )
 
 
-def main_parser() -> Network:
+def get_network() -> Network:
     parser: ArgumentParser = ArgumentParser()
 
     parser.add_argument("file", help="Network file")
@@ -234,27 +234,21 @@ def main_parser() -> Network:
 
     _network: list[str] = []
 
+    starthub: int = 0
+
+    endhub: int = 0
+
     with open(args.file, "r") as file:
         for line in file:
+            if line.startswith("start_hub"):
+                starthub += 1
+            elif line.startswith("end_hub"):
+                endhub += 1
+            if starthub > 1 or endhub > 1:
+                raise ValueError("Start_hub/end_hub must be at most 1")
             if not line.strip().startswith("#") and line.strip():
                 _network.append(line.strip())
         if not _network[0].startswith("nb_drones:"):
             raise ValueError("First line should be nb_drones")
 
     return data_parser(_network)
-
-
-# if __name__ == "__main__":
-#     zone_str = "end_hub: restricted_tunnel1 4 0
-# [zone=restricted color=grey max_drones=2]"
-#     try:
-#         zone = arg_split("start_hub: start 0 0 [color=green]")
-
-#         connection = connection_parser("connection:
-# gate2-gate3 [max_link_capacity=1]")
-#         print(zone)
-
-#         print(connection)
-
-#     except Exception as e:
-#         print("Unexpected error:", e)
