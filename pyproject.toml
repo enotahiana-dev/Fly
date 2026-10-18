@@ -1,5 +1,5 @@
 [project]
-name = "fly"
+name = "fly_in"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -11,7 +11,6 @@ dependencies = [
     "flake8>=7.3.0",
     "mypy>=2.3.1",
     "pydantic>=2.13.5",
-    "webcolors>=25.10.0"
 ]
 
 [project.scripts]
@@ -20,3 +19,6 @@ fly = "fly:main"
 [build-system]
 requires = ["uv_build>=0.12.17,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.setuptools.packages.find]
+where = ["src"]

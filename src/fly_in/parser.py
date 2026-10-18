@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator, Field
-import webcolors
 from argparse import Namespace, ArgumentParser
+from typing import Any
 
 
 class Metadata(BaseModel):
@@ -19,13 +19,7 @@ class Metadata(BaseModel):
         return self
 
     def is_valid_color(self) -> bool:
-        if self.color.lower() == "rainbow":
-            return True
-        try:
-            webcolors.name_to_hex(self.color)
-            return True
-        except ValueError:
-            return False
+        return self.color.isalpha()
 
 
 class Zone(BaseModel):
@@ -75,6 +69,13 @@ class Connection(BaseModel):
     zone_2: str
     max_link_capacity: int = Field(default=1, ge=1)
 
+    @model_validator(mode="after")
+    def model_validator(self) -> "Connection":
+        if self.zone_1 == self.zone_2:
+            raise ValueError("The same zone cannot be connected: "
+                             f"{self.zone_1} {self.zone_2}")
+        return self
+
 
 class Network(BaseModel):
     nb_drones: int = Field(gt=0)
@@ -87,10 +88,8 @@ class Network(BaseModel):
     def model_validator(self) -> "Network":
         zone_name = ([zone.name for zone in self.hub] +
                      [self.start_hub.name, self.end_hub.name])
-        connection = []
-        for con in self.connection:
-            connection.append((con.zone_1, con.zone_2))
-            connection.append((con.zone_2, con.zone_1))
+        connection = [frozenset((con.zone_1, con.zone_2)) for
+                      con in self.connection]
 
         coordinates = ([(zone.x, zone.y) for zone in self.hub] +
                        [(self.start_hub.x, self.start_hub.y),
@@ -108,6 +107,9 @@ class Network(BaseModel):
                 raise ValueError("Unknown zone for connection"
                                  f"'{con.zone_1}-{con.zone_2}'")
 
+        self.start_hub.metadata.max_drones = self.nb_drones
+        self.end_hub.metadata.max_drones = self.nb_drones
+
         return self
 
 
@@ -120,8 +122,8 @@ def data_parser(network: list[str]) -> Network:
 
     for zone in network:
         if zone.startswith("nb_drones"):
-            _, _, number = zone.partition(" ")
-            nb_drones = int(number)
+            _, number = zone.split(":", 1)
+            nb_drones = int(number.strip())
         elif zone.startswith("start_hub"):
             start_hub = arg_split(zone)
         elif zone.startswith("end_hub"):
@@ -180,8 +182,8 @@ def arg_split(zone_str: str) -> Zone:
         raise ValueError("Not valid zone: ", zone_str)
 
 
-def connection_parser(zone_str: str) -> Connection:
-    connection_list, _, metadata = zone_str.strip().partition('[')
+def connection_parser(connection_str: str) -> Connection:
+    connection_list, _, metadata = connection_str.strip().partition('[')
     if metadata:
         meta_dict = dict(item.split("=") for item in
                          metadata.strip('[]').split()
@@ -223,14 +225,7 @@ def metadata_parser(metadata: str) -> Metadata:
     )
 
 
-def get_network() -> Network:
-    parser: ArgumentParser = ArgumentParser()
-
-    parser.add_argument("file", help="Network file")
-
-    parser.add_argument("--output", help="output file", default="output.txt")
-
-    args: Namespace = parser.parse_args()
+def get_network(path: str) -> Network:
 
     _network: list[str] = []
 
@@ -238,7 +233,7 @@ def get_network() -> Network:
 
     endhub: int = 0
 
-    with open(args.file, "r") as file:
+    with open(path, "r") as file:
         for line in file:
             if line.startswith("start_hub"):
                 starthub += 1
@@ -252,3 +247,17 @@ def get_network() -> Network:
             raise ValueError("Start_hub/end_hub must be at most 1")
 
     return data_parser(_network)
+
+
+def arg_parse() -> dict[str, Any]:
+    parser: ArgumentParser = ArgumentParser()
+
+    parser.add_argument("file", help="Network file")
+
+    parser.add_argument("--output", help="output file", default="output.txt")
+
+    args: Namespace = parser.parse_args()
+
+    arg = {"file": args.file, "output": args.output}
+
+    return arg
