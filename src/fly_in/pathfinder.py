@@ -1,102 +1,121 @@
-from .parser import Network
+"""Pathfinding algorithms for the Fly-in Drones simulation."""
+from .graph import Graph
+from .models import Drone
+from typing import cast
+import heapq
 
 
-class Graph:
-    def __init__(self,
-                 network: Network):
-        self._network = network
-        self.connection = {
-            tuple(sorted((con.zone_1, con.zone_2))): con.max_link_capacity
-            for con in network.connection
-        }
+class TimePlanner:
+    """Space-time plannificator based on Djikstra."""
 
-        self.start: str = network.start_hub.name
-        self.end: str = network.end_hub.name
-        self.nb_drones: int = network.nb_drones
-
-        self.zones = {zone.name: zone for zone in network.hub}
-        self.zones.update({network.start_hub.name: network.start_hub,
-                           network.end_hub.name: network.end_hub})
-
-        self.zones_type = {zone.name: zone.metadata.zone
-                           for zone in network.hub}
-        self.zones_type[network.start_hub.name] = network.start_hub.metadata.zone
-        self.zones_type[network.end_hub.name] = network.end_hub.metadata.zone
-
-        self.zone_color = {zone.name: zone.metadata.color
-                           for zone in network.hub}
-        self.zone_color.update({network.start_hub.name: network.start_hub.metadata.color,
-                                network.end_hub.name: network.end_hub.metadata.color})
-
-        self._drones: list = []
+    def __init__(self, graph: Graph, horizon: int) -> None:
+        """Initialize the pathfinder with a graph and a limit."""
+        self.graph = graph
+        self.horizon = horizon
 
         self.zone_use: dict[tuple[str, int], int] = {}
         self.link_use: dict[tuple[str, str, int], int] = {}
 
-    def get_cost(self, zone_name: str) -> int:
-        zone_type: str = self.zones_type.get(zone_name, "")
-        if not zone_type:
-            raise ValueError("Invalid zone_name", zone_name)
-        if zone_type == "priority":
-            return 1
-        elif zone_type == "normal":
-            return 1
-        elif zone_type == "restricted":
-            return 2
-        elif zone_type == "blocked":
-            return 0
-        else:
-            raise ValueError(f"Not a valid zone type: {zone_type}")
+    @staticmethod
+    def _lkey(a: str, b: str, turn: int) -> tuple[str, str, int]:
+        """Normalise a conection keys."""
+        first, second = sorted((a, b))
+        return (first, second, turn)
 
-    def is_blocked(self, zone_name: str) -> bool:
-        """Vérifie si une zone est bloquée."""
-        zone = self.get_cost(zone_name)
-        return zone == 0
+    def _zone_free(self, zone: str, turn: int) -> bool:
+        """Verify if a zone have space left."""
+        if zone == self.graph.start or zone == self.graph.end:
+            return True
+        used = self.zone_use.get((zone, turn), 0)
+        return used < self.graph.zone_capacity(zone)
 
-    def find_neighbor(self, zone_str: str) -> list[str]:
-        con_neighboor: set[tuple] = {
-            (con.zone_1, con.zone_2) for con in self._network.connection
-            if zone_str in (con.zone_1, con.zone_2)
-            }
+    def _link_free(self, a: str, b: str, turn: int) -> bool:
+        """Vérify if a conection still have room during the turn."""
+        key = self._lkey(a, b, turn)
+        used = self.link_use.get(key, 0)
+        return used < self.graph.link_capacity(a, b)
 
-        str_neighbor: list[str] = [nei for t in con_neighboor
-                                   for nei in t if nei != zone_str]
+    def _moves(self, zone: str, t: int) -> list[tuple[str, int]]:
+        """Calculate all available move for a drone on a zone."""
+        result: list[tuple[str, int]] = []
 
-        return str_neighbor
+        if self._zone_free(zone, t + 1):
+            result.append((zone, t + 1))
 
-    def zone_capacity(self, zone: str) -> int:
-        _zone = self.zones.get(zone)
+        for nxt in self.graph.find_neighbor(zone):
+            if self.graph.is_blocked(nxt):
+                continue
 
-        if _zone is None:
-            raise ValueError(f"Invalid zone: {zone}")
-        return _zone.metadata.max_drones
+            cost = self.graph.get_cost(nxt)
+            arrive_turn = t + cost
 
-    def link_capacity(self, a: str, b: str) -> int:
-        key = tuple(sorted((a, b)))
-        capacity = self.connection.get(key)
-        if capacity is None:
-            raise ValueError(f"Invalid zones: {a, b}")
-        return capacity
+            links_ok = all(self._link_free(zone, nxt, t + k) for k in range(1,
+                           cost + 1))
 
-    def get_zone_color(self, zone: str) -> str:
-        color = self.zone_color.get(zone, "")
-        return color
+            if links_ok and self._zone_free(nxt, arrive_turn):
+                result.append((nxt, arrive_turn))
 
-    def get_link_use(self, zone_a: str, zone_b: str, turn: int) -> int:
-        key = tuple(sorted((zone_a, zone_b)))
-        usage = self.link_use.get((key[0], key[1], turn), None)
+        return result
 
-        if usage is None:
-            raise ValueError(f"Invalid zones: {key[0], key[1]}")
+    def plan(self, drone_id: int) -> Drone:
+        """Find the shortest path on a space-time for a drone."""
+        start = self.graph.start
+        end = self.graph.end
+        heap: list[tuple[int, int, str]] = [(0, 0, start)]
 
-        return usage
+        parent: dict[tuple[str, int], tuple[str, int] | None] = {(start, 0):
+                                                                 None}
 
-    def get_turns(self) -> dict[str, int]:
-        turns: dict[str, int] = {}
-        minimum = min([drone._arrival for drone in self._drones])
-        maximum = max([drone._arrival for drone in self._drones])
+        goal: tuple[str, int] | None = None
 
-        turns["min"] = minimum
-        turns["max"] = maximum
+        while heap:
+            t, moves, zone = heapq.heappop(heap)
 
-        return turns
+            if zone == end:
+                goal = (zone, t)
+                break
+
+            if t >= self.horizon:
+                continue
+
+            for nxt, arrive_turn in self._moves(zone, t):
+                state = (nxt, arrive_turn)
+                if state not in parent:
+                    parent[state] = (zone, t)
+                    extra = 0 if nxt == zone else 1
+                    heapq.heappush(heap, (arrive_turn, moves + extra, nxt))
+
+        if goal is None:
+            raise RuntimeError(f"Drone {drone_id} is blocked.")
+
+        labels: list[tuple[int, str]] = []
+        node = goal
+
+        while parent[node] is not None:
+            prev = cast(tuple[str, int], parent[node])
+            (zone_prev, turn_prev), (zone_dest, turn_dest) = prev, node
+
+            self.zone_use[(zone_dest, turn_dest)] = (
+                self.zone_use.get((zone_dest, turn_dest), 0) + 1
+            )
+
+            if zone_prev != zone_dest:
+                for turn in range(turn_prev + 1, turn_dest + 1):
+                    key = self._lkey(zone_prev, zone_dest, turn)
+                    self.link_use[key] = self.link_use.get(key, 0) + 1
+
+                if turn_dest - turn_prev == 2:
+                    labels.append((turn_prev + 1, f"{zone_prev}-{zone_dest}"))
+
+                labels.append((turn_dest, zone_dest))
+
+            node = prev
+
+        labels.sort()
+
+        return Drone(drone_id, labels, goal[1])
+
+    def init_usage(self) -> None:
+        """Initialize zone & link usage for graph."""
+        self.graph.zone_use = self.zone_use
+        self.graph.link_use = self.link_use

@@ -1,11 +1,15 @@
-from .parser import get_network, Network, arg_parse
+"""Entry point for the Fly-in Drones simulation."""
+from .parser import get_network, arg_parse
 from pydantic import ValidationError
-from .pathfinder import Graph
-from .simulation import Simulation, TimePlanner
+from .pathfinder import TimePlanner
+from .simulation import Simulation
 from .display import ColorPalette, Display
+from .models import Network
+from .graph import Graph
 
 
 def main() -> None:
+    """Run the Fly-in Drones simulation."""
     arg = arg_parse()
     network: Network = get_network(str(arg.get("file")))
     graph = Graph(network)

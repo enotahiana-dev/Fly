@@ -1,4 +1,5 @@
-from .pathfinder import Graph
+"""Terminal display and rendering for the Fly-in Drones simulation."""
+from .graph import Graph
 import random
 import sys
 
@@ -23,6 +24,7 @@ class ColorPalette:
         184, 204, 208, 213, 214, 220)
 
     def __init__(self, enabled: bool | None = None) -> None:
+        """Instanciate a ColorPalette."""
         self._enabled: bool = (
             sys.stdout.isatty() if enabled is None else enabled)
 
@@ -58,6 +60,7 @@ class Display:
 
     def __init__(self,
                  palette: ColorPalette | None = None) -> None:
+        """Initialize the display with a graph and color settings."""
         self._graph: Graph
         self._palette = palette if palette is not None else ColorPalette()
         self._dot: str = ""
@@ -74,13 +77,15 @@ class Display:
         return self._palette.paint(zone, self._graph.get_zone_color(zone))
 
     def line_output(self, line: str, turn: int) -> str:
+        """Format one line(turn) and return."""
         lines: list[str] = line.split(' ')
         drones: dict[str, str] = {}
         for lin in lines:
             drone, zone = lin.split('-', 1)
             _prop = self.usage_format(turn, zone)
-            drones[drone] = self._palette.paint(f"{zone}{_prop}",
-                                                self._graph.get_zone_color(zone))
+            drones[drone] = self._palette.paint(
+                f"{zone}{_prop}",
+                self._graph.get_zone_color(zone))
 
         _line: list[str] = []
         _arrow: str = self._palette.paint("▸", "lime")
@@ -91,22 +96,27 @@ class Display:
             else:
                 _line.append(f"{drone} {_arrow} {zone}")
 
-
         lin = self._palette.paint(" ◆ ", "lime").join(_line)
 
         return lin
 
     def show_turn(self, turn: int, line: str
                   ) -> None:
-        """Print one turn"""
+        """Print one turn."""
         if self._graph.end in line:
             self._dot = self.g_dot
         else:
             self._dot = self.r_dot
+        start: str = "    \033[3mStart: \033[0m"
+        end: str = "    \033[3mEnd: \033[0m"
+        usage_s = self.usage_format(turn, self._graph.start)
+        usage_e = self.usage_format(turn, self._graph.end).strip("()")
 
-        print(f" {self._dot} ", f"{self._palette.paint(f" TURN {turn}:", "gray")}")
-        print(f"    \033[3mStart: \033[0m{self.usage_format(turn, self._graph.start)}")
-        print(f"    \033[3mEnd: \033[0m{self.usage_format(turn, self._graph.end).strip("()")}", "\n")
+        print(f" {self._dot} ", f"{self._palette.paint(f" TURN {turn}:",
+              "gray")}")
+
+        print(f"{start}{usage_s}")
+        print(f"{end}{usage_e}", "\n")
 
         print("    ", self.line_output(line, turn))
 
@@ -114,17 +124,21 @@ class Display:
         """Step through the turns, one key press at a time."""
         print("\n \n")
         print(f"{self._palette.paint(" • TURN 0:", "gray")}")
-        print(f"    \033[3mStart: \033[0m{self.usage_format(0, self._graph.start)}")
-        print(f"    \033[3mEnd: \033[0m{self.usage_format(0, self._graph.end).strip("()")}", "\n")
+        print(f"    \033[3mStart: \033[0m{self.usage_format(0,
+              self._graph.start)}")
+
+        print(f"    \033[3mEnd: \033[0m{self.usage_format(0,
+              self._graph.end).strip("()")}", "\n")
         input()
         for turn, line in enumerate(lines, start=1):
             self.show_turn(turn, line)
             print()
             input()
-        print(f"\033[38;5;4;3m • All drones successfully delivered ✓ \033[0m")
+        print("\033[38;5;4;3m • Drones are successfully delivered ✓ \033[0m")
         self.stats(lines)
 
     def usage_format(self, turn: int, zone: str) -> str:
+        """Return the usage into a (usage/capacity) format."""
         usage: int = 0
         if zone == self._graph.end:
             for z, t in self._graph.zone_use.keys():
@@ -135,7 +149,8 @@ class Display:
 
         elif zone == self._graph.start:
             if turn == 0:
-                return f"{self._graph.zone_capacity(zone)}/{self._graph.zone_capacity(zone)}"
+                return (f"{self._graph.zone_capacity(zone)}/"
+                        f"{self._graph.zone_capacity(zone)}")
             usage = self._graph.zone_use.get((zone, turn), 0)
             max_drones = self._graph.zone_capacity(zone)
             return f"{usage}/{max_drones}"
@@ -150,8 +165,9 @@ class Display:
             max_drones = self._graph.zone_capacity(zone)
         return f"({usage}/{max_drones})"
 
-    def stats(self, lines: list[str]):
-        print("\033[3;34m_______________________________________________\033[0m\n")
+    def stats(self, lines: list[str]) -> None:
+        """Print the statistics of the simulation."""
+        print(f"\033[3;34m{("_") * 47}\033[0m\n")
         print("\033[38;5;4;3mSTATS:\033[0m")
         print()
 
@@ -164,17 +180,18 @@ class Display:
         print(f"File saved in: {self._output_file}")
 
         print()
-        print("\033[3;34m_______________________________________________\033[0m\n")
+        print(f"\033[3;34m{("_") * 47}\033[0m\n")
 
     def init_form(self) -> None:
+        """Initialize a dot with different color."""
         self.r_dot: str = self._palette.paint('•', "red")
         self.g_dot: str = self._palette.paint('•', "green")
 
     def print_banner(self) -> None:
-        """Affiche la bannière d'introduction."""
-        c1 = "\033[38;2;80;220;120m"    # vert
-        c2 = "\033[38;2;80;150;255m"    # bleu
-        c3 = "\033[38;2;255;215;80m"    # jaune
+        """Print the banner introduction."""
+        c1 = "\033[38;2;80;220;120m"
+        c2 = "\033[38;2;80;150;255m"
+        c3 = "\033[38;2;255;215;80m"
         c4 = "\033[38;2;220;100;220m"
         c5 = "\033[38;5;244m"
         r = "\033[0m"
@@ -199,3 +216,14 @@ class Display:
         ]
         for line in lines:
             print(line)
+        print()
+
+    def print_command(self) -> None:
+        """Print the available command for interaction."""
+        c = "\033[38;5;244m"
+        b = "\033[1m"
+        res = "\033[0m"
+        print(
+              f"{b}{c}'v' for visualisation{res}",
+              f"{b}{c}'l' for line per turn{res}",
+              f"{b}{c}'q' to quit{res}")
