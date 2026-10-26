@@ -2,3 +2,4 @@
 __pycache__/
 maps/
 .venv/
+output.txt

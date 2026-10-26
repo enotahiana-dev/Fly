@@ -1,9 +1,9 @@
-*This project has been created as part of the 42 curriculum by <erakotom>.*
+_This project has been created as part of the 42 curriculum by erakotom._
 
 # Fly-in
 
 ## Description
-Fly-in is a Python simulation of a fleet of autonomous drones
+The project is about a simulation of a fleet of autonomous drones
 moving from a start hub to an end hub through a network of connected
 zones.
 
@@ -40,7 +40,7 @@ make run ARGS="<path_to_maps> <flag>"
 
 Or manually:
 ```bash
-uv run python -m src.fly_in <path_to_maps> <flag>
+uv run python -m src <path_to_maps> <flag>
 ```
 
 ### Flag
@@ -67,10 +67,101 @@ for strict typing verification.
 
 ## Algorithm description
 
-Dans la littérature, ta méthode complète ressemble à Cooperative A* (Silver, 2005) ou Space-Time A*. C’est la famille des problèmes MAPF (Multi-Agent Path Finding) : trouver des chemins pour plusieurs agents sans collision.
+Initially, I thought that running a DFS to enumerate all possible paths and then distributing them across drones would be feasible, but it proved more complex than expected. I therefore switched to Dijkstra on a time-expanded graph, where each state is (zone, turn) and staying in place is an edge with cost 1. Drones are planned sequentially, and each one reserves its cells in a reservation table that subsequent drones must respect. This approach is known as prioritized planning
 
-La seule différence avec Cooperative A* est que ton code utilise Dijkstra et non A*. A* ajoute une heuristique (une estimation de la distance restante) pour chercher plus vite. Toi, tu n’en as pas, donc c’est bien Dijkstra.
+### Approach
 
-Ce que tu peux dire en peer-review
+The planner is a space-time Dijkstra that plans drones sequentially (prioritized planning). Each drone is planned with the reservations of previous drones already in place.
 
-« Je fais un Dijkstra sur un graphe étendu dans le temps, où un état est (zone, tour) et où rester sur place est une arête de coût 1. Les drones sont planifiés l’un après l’autre, et chacun réserve ses cases dans une table de réservations que les suivants doivent respecter. C’est de la planification prioritaire, une approche gloutonne issue du MAPF. »
+### Reservations
+
+Two tables track capacity over time:
+
+    zone_use[(zone, turn)] — drones per zone per turn,
+
+    link_use[(a, b, turn)] — drones per connection per turn.
+
+The start and end zones are always free. Connection keys are normalized with _lkey(a, b, turn) so that a-b and b-a are the same connection.
+
+### Move generation
+
+For a drone in zone z at turn t:
+
+    Wait — (z, t + 1), if z is free at t + 1.
+
+    Move — (neighbor, t + cost), if the destination and every traversed connection are free for every intermediate turn.
+
+A move is legal only if all capacities are respected at every turn of the move.
+
+### Planning one drone
+
+Dijkstra with a priority queue keyed by (arrival_turn, moves, zone). The parent dictionary stores predecessors for path reconstruction. The search stops at the first (end, t) popped, which is optimal.
+
+### Output
+
+Each drone receives a list of time-stamped labels (turn, destination). A destination is either a zone name or a connection name (for restricted-zone transit).
+
+
+## Visual Representation
+
+The visualization is a **colored terminal output**, controlled by
+three keys:
+
+| Key | Action |
+|---|---|
+| `v` | Colroed visualization mode |
+| `l` | Line-by-line output mode |
+| `q` | Quit |
+
+In colored mode, the display advances turn by turn and waits for
+`Enter`, so the user can follow each step at their own pace.
+
+Each round shows the turn number, the start and end hub state, zone names (colored) with it's state; drones in a zone( ▸ ),
+drones in transit to restricted zones( ▸▸ ).
+
+At the end, a summary is always printed: total drones, number of
+turns, minimum/maximum/average turns per drone.
+
+## Technical Choices
+
+- **Python 3.10+** — pattern matching, union types, modern typing.
+- **Pydantic** — declarative validation with clear error messages.
+- **Time-expanded Dijkstra** — each state is `(zone, turn)`.
+  Handles waiting, restricted zones, and reservations naturally.
+- **Prioritized planning** — drones planned sequentially.
+  No capacity violation by construction; simple to explain.
+- **No graph library** — custom `Graph`, `Pathfinder`, and
+  `TimePlanner`. Only `heapq` and `collections` from stdlib.
+- **Colored terminal** — works over SSH, no dependency, self-paced.
+  Strict output on `stdout`, visualization on `stderr`.
+
+  ### Models
+  The parser validates the map file using **Pydantic models**. Each line of the map is parsed into a dedicated model:
+
+| Model | Role |
+|---|---|
+| `Zone` | Base model for any zone (name, coordinates, metadata). |
+| `Hub` | Regular hub zone. |
+| `StartHub` | The unique start hub. |
+| `EndHub` | The unique end hub. |
+| `Metadata` | Represent a zone's metadata. |
+| `Connection` | A bidirectional connection between two zones. |
+| `Network` | The full map: nb_drones, start, end, hubs, connections. |
+| `Drone` | Represent a drone with his path. |
+
+
+## Resources
+
+### Documentation
+
+- [Dijkstra's algorithm](https://www.youtube.com/watch?v=_lHSawdgXpI&pp=ygUSZGlqa3N0cmEgYWxnb3JpdGht)
+- [argparse](https://docs.python.org/3/library/argparse.html)
+- [heapq](https://docs.python.org/3/library/heapq.html)
+- [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code)
+
+### AI Usage
+
+AI was used to help with documentation, code review, and
+algorithm explanations. It was not used to generate the core
+logic of the project. All suggestions were reviewed and tested
+before integration.

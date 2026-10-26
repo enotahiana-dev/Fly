@@ -100,8 +100,8 @@ class Display:
 
         return lin
 
-    def show_turn(self, turn: int, line: str
-                  ) -> None:
+    def show_turn(self, turn: int, line: str,
+                  total: int) -> None:
         """Print one turn."""
         if self._graph.end in line:
             self._dot = self.g_dot
@@ -112,18 +112,18 @@ class Display:
         usage_s = self.usage_format(turn, self._graph.start)
         usage_e = self.usage_format(turn, self._graph.end).strip("()")
 
-        print(f" {self._dot} ", f"{self._palette.paint(f" TURN {turn}:",
-              "gray")}")
+        print(f" {self._dot} ",
+              f"{self._palette.paint(f" TURN {turn}/{total}:", "gray")}")
 
         print(f"{start}{usage_s}")
         print(f"{end}{usage_e}", "\n")
-
         print("    ", self.line_output(line, turn))
 
     def play(self, lines: list[str]) -> None:
         """Step through the turns, one key press at a time."""
+        tot = len(lines)
         print("\n \n")
-        print(f"{self._palette.paint(" • TURN 0:", "gray")}")
+        print(f"{self._palette.paint(f" • TURN 0/{tot}:", "gray")}")
         print(f"    \033[3mStart: \033[0m{self.usage_format(0,
               self._graph.start)}")
 
@@ -131,7 +131,7 @@ class Display:
               self._graph.end).strip("()")}", "\n")
         input()
         for turn, line in enumerate(lines, start=1):
-            self.show_turn(turn, line)
+            self.show_turn(turn, line, tot)
             print()
             input()
         print("\033[38;5;4;3m • Drones are successfully delivered ✓ \033[0m")
@@ -208,7 +208,7 @@ class Display:
             f"{c4}            |___/                               {r}",
             "",
             f"{b}{c1}                  Command and PRESS Enter{r}",
-            f"{b}{c5}'v' for visualisation{r}",
+            f"{b}{c5}'v' for colored output{r}",
             f"{b}{c5}'l' for line per turn{r}",
             f"{b}{c5}'q' to quit{r}",
 
@@ -224,6 +224,6 @@ class Display:
         b = "\033[1m"
         res = "\033[0m"
         print(
-              f"{b}{c}'v' for visualisation{res}",
+              f"{b}{c}'v' for colored output{res}",
               f"{b}{c}'l' for line per turn{res}",
               f"{b}{c}'q' to quit{res}")

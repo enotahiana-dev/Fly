@@ -6,10 +6,10 @@ install:
 	@uv sync
 
 run: install
-	@uv run python -m src.fly_in $(ARGS)
+	@uv run python -m src $(ARGS)
 
 debug: install
-	@uv run python -m pdb -m src.fly_in $(ARGS)
+	@uv run python -m pdb -m src $(ARGS)
 
 clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
