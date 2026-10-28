@@ -179,7 +179,6 @@ class Display:
         print(f" - Max turns: {self._graph.get_turns()["max"]}")
         print(f" - Total path cost: {self._graph.get_total_path_cost()}\n")
 
-
         print(f"File saved in: {self._output_file}")
 
         print()
