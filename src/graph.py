@@ -101,13 +101,22 @@ class Graph:
 
         return usage
 
-    def get_turns(self) -> dict[str, int]:
+    def get_turns(self) -> dict[str, int | float]:
         """Return the min & max turn."""
-        turns: dict[str, int] = {}
+        turns: dict[str, int | float] = {}
         minimum = min([drone._arrival for drone in self._drones])
         maximum = max([drone._arrival for drone in self._drones])
+        average = sum([drone._arrival for drone in self._drones]) / self.nb_drones
 
         turns["min"] = minimum
         turns["max"] = maximum
+        turns["avg"] = round(average, 1)
 
         return turns
+
+    def get_total_path_cost(self) -> int:
+        total = 0
+        for drone in self._drones:
+            total += len(drone.preserved_path)
+
+        return total

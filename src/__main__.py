@@ -14,7 +14,7 @@ def main() -> None:
     network: Network = get_network(str(arg.get("file")))
     graph = Graph(network)
 
-    planner = TimePlanner(graph, 120)
+    planner = TimePlanner(graph, 100)
     color_palette = ColorPalette()
     display = Display(color_palette)
     simu = Simulation(planner, display, arg)

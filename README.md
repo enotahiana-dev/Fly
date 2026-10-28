@@ -20,7 +20,7 @@ The goal is to route all drones from the start to the end in the
 
 ### Requirements
 
-- Python 3.10 or later
+- Python 3.12 or later
 - uv
 
 ### Installation
@@ -47,7 +47,7 @@ uv run python -m src <path_to_maps> <flag>
 ```bash
 --output
 ```
-Specify where the turn-per-line output will be saved.
+Specifies the file where the output will be saved.
 
 ### Debug
 ```bash
@@ -101,6 +101,29 @@ Dijkstra with a priority queue keyed by (arrival_turn, moves, zone). The parent 
 
 Each drone receives a list of time-stamped labels (turn, destination). A destination is either a zone name or a connection name (for restricted-zone transit).
 
+### Complexity
+Notation: `V` zones, `E` connections, `T` number of turns explored (bounded
+by a horizon), `N` drones.
+
+| | Complexity |
+|---|---|
+| States per drone | `V * T` |
+| Edges per drone | about `(V + 2E) * T` |
+| Time for one drone | `O(T * (V + E) * log(V * T))` |
+| Time for all drones | `O(N * T * (V + E) * log(V * T))` |
+
+Details:
+ 
+- Each state is pushed to the heap at most once (a state already in `parent`
+  is skipped), which gives the `log(V * T)` factor.
+- Checking a zone or a link is a dictionary access, so `O(1)`.
+- In practice `T` is the arrival turn of the drone, not the horizon: the
+  search stops as soon as the end zone is popped from the heap. The horizon
+  only protects against an unreachable end zone.
+- Movement costs are only 1 or 2 turns, so the heap could be replaced by one
+  queue per turn, giving `O(T * (V + E))` per drone. This optimization is not
+  implemented.
+
 
 ## Visual Representation
 
@@ -109,7 +132,7 @@ three keys:
 
 | Key | Action |
 |---|---|
-| `v` | Colroed visualization mode |
+| `v` | Colored visualization mode |
 | `l` | Line-by-line output mode |
 | `q` | Quit |
 
@@ -120,11 +143,11 @@ Each round shows the turn number, the start and end hub state, zone names (color
 drones in transit to restricted zones( ▸▸ ).
 
 At the end, a summary is always printed: total drones, number of
-turns, minimum/maximum/average turns per drone.
+turns, minimum/maximum/average turns per drone, etc,...
 
 ## Technical Choices
 
-- **Python 3.10+** — pattern matching, union types, modern typing.
+- **Python 3.12+** — pattern matching, union types, modern typing.
 - **Pydantic** — declarative validation with clear error messages.
 - **Time-expanded Dijkstra** — each state is `(zone, turn)`.
   Handles waiting, restricted zones, and reservations naturally.
@@ -135,8 +158,8 @@ turns, minimum/maximum/average turns per drone.
 - **Colored terminal** — works over SSH, no dependency, self-paced.
   Strict output on `stdout`, visualization on `stderr`.
 
-  ### Models
-  The parser validates the map file using **Pydantic models**. Each line of the map is parsed into a dedicated model:
+### Models
+The parser validates the map file using **Pydantic models**. Each line of the map is parsed into a dedicated model:
 
 | Model | Role |
 |---|---|
@@ -151,7 +174,6 @@ turns, minimum/maximum/average turns per drone.
 
 
 ## Resources
-
 ### Documentation
 
 - [Dijkstra's algorithm](https://www.youtube.com/watch?v=_lHSawdgXpI&pp=ygUSZGlqa3N0cmEgYWxnb3JpdGht)

@@ -171,11 +171,14 @@ class Display:
         print("\033[38;5;4;3mSTATS:\033[0m")
         print()
 
-        print(f" - Total drones: {self._graph.nb_drones}")
+        print(f" - Nb of drones: {self._graph.nb_drones}")
 
         print(f" - Total turns: {len(lines)}")
         print(f" - Min turns: {self._graph.get_turns()["min"]}")
-        print(f" - Max turns: {self._graph.get_turns()["max"]}\n")
+        print(f" - Avg turns: {self._graph.get_turns()["avg"]}")
+        print(f" - Max turns: {self._graph.get_turns()["max"]}")
+        print(f" - Total path cost: {self._graph.get_total_path_cost()}\n")
+
 
         print(f"File saved in: {self._output_file}")
 

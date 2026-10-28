@@ -152,6 +152,7 @@ class Drone:
         """Initialize a Drone instance."""
         self._id: str = "D" + str(id)
         self._path: list[tuple[int, str]] = labels
+        self.preserved_path: list[tuple[int, str]] = list(labels)
         self._arrival: int = arrival
         self._arrived: bool = False
         self._nb_moves: int = len(self._path)
@@ -165,3 +166,4 @@ class Drone:
             return move
         else:
             raise IndexError("Drone has reached it's destination")
+
