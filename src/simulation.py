@@ -11,7 +11,7 @@ class Simulation:
     def __init__(self,
                  planner: TimePlanner,
                  display: Display,
-                 arg: dict[str, Any]
+                 output_file: str
                  ) -> None:
         """Initialize the simulation."""
         self._planner = planner
@@ -20,7 +20,7 @@ class Simulation:
         self.lines: list[str] = []
         self._display = display
         self._display._graph = self._planner.graph
-        self._output_file: Any = arg.get("output")
+        self._output_file: Any = output_file
 
     def schedule(self) -> list[Drone]:
         """Planify all drones consecutively on the same planificator."""
