@@ -1,10 +1,10 @@
 [project]
 name = "fly_in"
 version = "0.1.0"
-description = "Multi-drone routing simulation."
+description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "erakotom", email = "erakotom@student.42antananarivo.mg" }
+    { name = "erakoto", email = "enotahiana@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -12,6 +12,7 @@ dependencies = [
     "flake8-docstrings>=1.7.0",
     "mypy>=2.3.1",
     "pydantic>=2.13.5",
+    "pygame>=2.6.1",
 ]
 
 [build-system]

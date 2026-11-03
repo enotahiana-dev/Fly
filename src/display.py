@@ -113,7 +113,7 @@ class Display:
         usage_e = self.usage_format(turn, self._graph.end).strip("()")
 
         print(f" {self._dot} ",
-              f"{self._palette.paint(f" TURN {turn}/{total}:", "gray")}")
+              f"{self._palette.paint(f' TURN {turn}/{total}:', 'gray')}")
 
         print(f"{start}{usage_s}")
         print(f"{end}{usage_e}", "\n")
@@ -123,7 +123,7 @@ class Display:
         """Step through the turns, one key press at a time."""
         tot = len(lines)
         print("\n \n")
-        print(f"{self._palette.paint(f" • TURN 0/{tot}:", "gray")}")
+        print(f"{self._palette.paint(f' • TURN 0/{tot}:', 'gray')}")
         print(f"    \033[3mStart: \033[0m{self.usage_format(0,
               self._graph.start)}")
 
@@ -173,10 +173,10 @@ class Display:
 
         print(f" - Nb of drones: {self._graph.nb_drones}")
 
-        print(f" - Total turns: {len(lines)}")
-        print(f" - Min turns: {self._graph.get_turns()["min"]}")
-        print(f" - Avg turns: {self._graph.get_turns()["avg"]}")
-        print(f" - Max turns: {self._graph.get_turns()["max"]}")
+        print(f" - Total turn: {len(lines)}")
+        print(f" - Min turn: {self._graph.get_turns()["min"]}")
+        print(f" - Avg turn: {self._graph.get_turns()["avg"]}")
+        print(f" - Max turn: {self._graph.get_turns()["max"]}")
         print(f" - Total path cost: {self._graph.get_total_path_cost()}\n")
 
         print(f"File saved in: {self._output_file}")
@@ -210,9 +210,10 @@ class Display:
             f"{c4}            |___/                               {r}",
             "",
             f"{b}{c1}                  Command and PRESS Enter{r}",
-            f"{b}{c5}'v' for colored output{r}",
-            f"{b}{c5}'l' for line per turn{r}",
-            f"{b}{c5}'q' to quit{r}",
+            f"{b}{c5}'d' default output{r}",
+            f"{b}{c5}'t' terminal colored{r}",
+            f"{b}{c5}'g' graphical{r}",
+            f"{b}{c5}'q' quit{r}",
 
 
         ]
@@ -226,6 +227,7 @@ class Display:
         b = "\033[1m"
         res = "\033[0m"
         print(
-              f"{b}{c}'v' for colored output{res}",
-              f"{b}{c}'l' for line per turn{res}",
-              f"{b}{c}'q' to quit{res}")
+              f"{b}{c}'d' default output{res}",
+              f"{b}{c}'t' terminal colored{res}",
+              f"{b}{c}'g' graphical{res}",
+              f"{b}{c}'q' quit{res}")

@@ -3,6 +3,7 @@ from .display import Display
 from typing import Any
 from .pathfinder import TimePlanner
 from .models import Drone
+from .graphical_display import GraphicDisplay
 
 
 class Simulation:
@@ -11,7 +12,7 @@ class Simulation:
     def __init__(self,
                  planner: TimePlanner,
                  display: Display,
-                 output_file: str
+                 output_file: str,
                  ) -> None:
         """Initialize the simulation."""
         self._planner = planner
@@ -54,14 +55,18 @@ class Simulation:
 
         while True:
             inp = input("▸ ")
-            if inp.lower() == "l":
+            if inp.lower() == "d":
                 print("\n")
                 for line in self.lines:
                     print(line)
                 input()
                 self._display.stats(self.lines)
-            elif inp.lower() == "v":
+            elif inp.lower() == "t":
                 self._display.play(self.lines)
+            elif inp.lower() == "g":
+                graphic = GraphicDisplay(self._planner.graph)
+                graphic.run()
+                self._display.stats(self.lines)
             elif inp.lower() == "q":
                 break
             else:

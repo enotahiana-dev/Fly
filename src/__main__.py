@@ -6,19 +6,22 @@ from .simulation import Simulation
 from .display import ColorPalette, Display
 from .models import Network
 from .graph import Graph
-
+from signal import signal, SIGINT, SIG_IGN, SIGQUIT
 
 if __name__ == "__main__":
+    signal(SIGINT, SIG_IGN)
+    signal(SIGQUIT, SIG_IGN)
     try:
         parser = Parser()
         network: Network = parser.get_network()
         graph = Graph(network)
-    
+
         planner = TimePlanner(graph, 100)
         color_palette = ColorPalette()
         display = Display(color_palette)
-        simu = Simulation(planner, display, parser._output_file)
-    
+        simu = Simulation(planner, display,
+                          parser._output_file)
+
         simu.run()
 
     except ValidationError as error:

@@ -22,6 +22,9 @@ class Graph:
         self.zones.update({network.start_hub.name: network.start_hub,
                            network.end_hub.name: network.end_hub})
 
+        self.links = [(link.zone_1, link.zone_2) for link in
+                      network.connection]
+
         self.zones_type = {zone.name: zone.metadata.zone
                            for zone in network.hub}
         self.zones_type[self.start] = network.start_hub.metadata.zone
@@ -36,6 +39,9 @@ class Graph:
 
         self.zone_use: dict[tuple[str, int], int] = {}
         self.link_use: dict[tuple[str, str, int], int] = {}
+
+        self.y_max = max([abs(z.y) for z in self.zones.values()])
+        self.x_max = max([abs(z.x) for z in self.zones.values()])
 
     def get_cost(self, zone_name: str) -> int:
         """Get the cost of a zone."""
@@ -122,3 +128,45 @@ class Graph:
             total += len(drone.preserved_path)
 
         return total
+
+    def get_coordinate(self, zone: str) -> tuple[float, float]:
+        """Return the coordinates of a zone(or link)."""
+        if '-' in zone:
+            z1, z2 = zone.split('-')
+            _z1 = self.zones.get(z1)
+            _z2 = self.zones.get(z2)
+
+            if _z1 is not None and _z2 is not None:
+                x = (_z1.x + _z2.x) / 2
+                y = (_z1.y + _z2.y) / 2
+
+            return x, y
+        else:
+            z = self.zones.get(zone)
+            if z is not None:
+                return z.x, z.y
+        raise ValueError("Invalid zone: ", zone)
+
+    def get_drone_path(self,
+                       drone: Drone) -> dict[int,
+                                             tuple[float, float]]:
+        """Return a drone path in a turn-coordinate format."""
+        turn_path = {}
+        turn_path[0] = self.get_coordinate(self.start)
+
+        for p in drone.preserved_path:
+            turn = p[0]
+            x, y = self.get_coordinate(p[1])
+            turn_path[turn] = x, y
+
+        return turn_path
+
+    def get_moves(self) -> list[dict[str, dict[int, tuple[float, float]]]]:
+        """Return all the drones with their path coordinates."""
+        tracks = []
+
+        for drone in self._drones:
+            moves = {}
+            moves[drone._id] = self.get_drone_path(drone)
+            tracks.append(moves)
+        return tracks

@@ -6,9 +6,9 @@ from .models import Network, Zone, Connection, Hub
 from .models import EndHub, StartHub, Metadata
 
 
-
 class Parser:
     """Map file parser for the Fly-in Drones simulation."""
+
     def __init__(self) -> None:
         """Initialize the parser."""
         self._arguments: dict[str, Any] = self.arg_parse()
@@ -38,10 +38,10 @@ class Parser:
                     connection.append(self.connection_parser(zone))
                 else:
                     raise ValueError(f"Not a valid zone type:"
-                                    f" {zone} (line {i})")
-            
+                                     f" {zone} (line {i})")
+
             except ValidationError as error:
-                raise ValueError(f"{error.errors()[0]["msg"]} (line {i})")
+                raise ValueError(f"{error.errors()[0]['msg']} (line {i})")
             except Exception as error:
                 raise ValueError(f"{error} (line {i})")
 
@@ -53,7 +53,6 @@ class Parser:
             connection=connection
         ))
 
-
     def arg_split(self, zone_str: str) -> Zone:
         """Parse a zone line and return the corresponding Zone model."""
         zone_part, _, meta = zone_str.strip().partition("[")
@@ -64,15 +63,15 @@ class Parser:
 
         zone_list = zone_part.strip().split()
         if len(zone_list) < 4:
-            raise ValueError(f"Incomplete zone line")
+            raise ValueError("Incomplete zone line")
 
         zone_class = zone_list[0].rstrip(":")
         name = zone_list[1]
         try:
             x = int(zone_list[2])
             y = int(zone_list[3])
-        except ValueError as error:
-            raise ValueError(f"Invalid coordinates")
+        except ValueError:
+            raise ValueError("Invalid coordinates")
 
         if zone_class == "start_hub":
             return StartHub(
@@ -107,8 +106,8 @@ class Parser:
 
         if metadata:
             meta_dict = dict(item.split("=") for item in
-                            metadata.strip('[]').split()
-                            )
+                             metadata.strip('[]').split()
+                             )
             for key in meta_dict.keys():
                 if not key == "max_link_capacity":
                     raise ValueError(f"Invalid Connection's metadata: {key}")
@@ -131,12 +130,12 @@ class Parser:
         allowed_keys = ("color", "zone", "max_drones")
 
         meta_dict = dict(item.split("=") for item in
-                        metadata.strip('[]').strip().split())
+                         metadata.strip('[]').strip().split())
         for key, value in meta_dict.items():
             if key not in allowed_keys:
                 raise ValueError(f"Invalid metadata key: {key}")
             if not value:
-                raise ValueError(f"Invalid metadata value")
+                raise ValueError("Invalid metadata value")
 
         return Metadata(
             color=meta_dict["color"]
@@ -146,8 +145,6 @@ class Parser:
             max_drones=int(meta_dict["max_drones"])
             if meta_dict.get("max_drones") is not None else 1,
         )
-       
-
 
     def get_network(self) -> Network:
         """Read the map file and start the parsing."""
@@ -173,7 +170,8 @@ class Parser:
                 raise ValueError("Start_hub/end_hub must be at most 1\n"
                                  f"starthub: {starthub}, endhub: {endhub}")
             if nb_drone > 1:
-                raise ValueError("The number of drones must be stated one time.")
+                raise ValueError("The number of drones must"
+                                 "be stated one time.")
 
         return self.data_parser(_network)
 
@@ -184,7 +182,8 @@ class Parser:
 
         parser.add_argument("map_file", help="Network file")
 
-        parser.add_argument("--output", help="output file", default="output.txt")
+        parser.add_argument("--output", help="output file",
+                            default="output.txt")
 
         args: Namespace = parser.parse_args()
 
