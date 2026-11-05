@@ -180,13 +180,14 @@ class Parser:
         """Parse command-line arguments."""
         parser: ArgumentParser = ArgumentParser()
 
-        parser.add_argument("map_file", help="Network file")
+        parser.add_argument("--map", help="Network file",
+                            default="assets/map.txt")
 
         parser.add_argument("--output", help="output file",
                             default="output.txt")
 
         args: Namespace = parser.parse_args()
 
-        arg = {"file": args.map_file, "output": args.output}
+        arg = {"file": args.map, "output": args.output}
 
         return arg

@@ -35,19 +35,24 @@ uv sync
 
 ### Run
 ```bash
-make run ARGS="<path_to_maps> <flag>"
+make run ARGS="<flags>"
 ```
 
 Or manually:
 ```bash
-uv run python -m src <path_to_maps> <flag>
+uv run python -m src <flags>
 ```
 
-### Flag
+### Flags
+```bash
+--map
+```
+Specifies the path to the map.
 ```bash
 --output
 ```
 Specifies the file where the output will be saved.
+
 
 ### Debug
 ```bash
@@ -127,23 +132,54 @@ Details:
 
 ## Visual Representation
 
-The visualization is a **colored terminal output**, controlled by
-three keys:
+There are three (3) ways of representing the simulation:
 
-| Key | Action |
+| Command | Action |
 |---|---|
-| `v` | Colored visualization mode |
-| `l` | Line-by-line output mode |
+| `d` | default(line per turn) |
+| `t` | terminal interactive |
+| `g` | graphical view |
 | `q` | Quit |
 
-In colored mode, the display advances turn by turn and waits for
+In terminal colored mode, the display advances turn by turn and waits for
 `Enter`, so the user can follow each step at their own pace.
 
 Each round shows the turn number, the start and end hub state, zone names (colored) with it's state; drones in a zone( ▸ ),
 drones in transit to restricted zones( ▸▸ ).
 
+For the graphical interface, there are four (4) keys to interact:
+
+| key | Action |
+|---|---|
+| `space` | pause |
+| `r` | restart |
+| `l` | show/hide zones names |
+| `q` | quit |
+
 At the end, a summary is always printed: total drones, number of
 turns, minimum/maximum/average turns per drone, etc,...
+
+
+## Input/Output example
+
+__Input (map) example__:
+
+![alt text](assets/map.png)
+
+__Output examples__:
+* _Turn per line view_
+
+D1-corridorA D2-roof1
+
+D1-goal D2-goal
+
+* _Terminal colored output_
+
+![alt text](assets/terminal.png)
+
+* _Graphical representation_
+
+![alt text](assets/graphic.png)
 
 ## Technical Choices
 
@@ -180,6 +216,7 @@ The parser validates the map file using **Pydantic models**. Each line of the ma
 - [argparse](https://docs.python.org/3/library/argparse.html)
 - [heapq](https://docs.python.org/3/library/heapq.html)
 - [ANSI escape codes](https://en.wikipedia.org/wiki/ANSI_escape_code)
+- [Pygame](https://www.pygame.org/docs/)
 
 ### AI Usage
 

@@ -1,0 +1,9 @@
+nb_drones: 2
+start_hub: hub 0 0 [color=green]
+end_hub: goal 10 10 [color=yellow]
+hub: roof1 3 4 [color=red]
+hub: corridorA 4 3 [color=blue]
+connection: hub-roof1
+connection: roof1-goal
+connection: hub-corridorA
+connection: corridorA-goal
